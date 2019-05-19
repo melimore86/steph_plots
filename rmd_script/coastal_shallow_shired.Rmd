@@ -1,0 +1,121 @@
+---
+title: "Shired- Coastal Shallow and Deep"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library("cowplot")
+library("devtools")
+library("ggplot2")
+library("ggpubr")
+library("grid")
+library("gridExtra")
+library("plotly")
+library("lattice")
+library("marelac")
+library("scales")
+library("dplyr")
+```
+
+####Longitude:  -83.20143
+####Latitude:    29.40687
+
+The Diver sensors for both shallow and deep measurements are located in the same well. 
+
+
+```{r, include=FALSE, warning=FALSE, message=FALSE }
+
+setwd("C:\\Users\\Mel\\Desktop\\steph_plots\\data")
+cabinroad_coastshallow<-read.csv("coastal_shallow_shired2.csv", header=T)
+
+colnames(cabinroad_coastshallow) <- c("newDate", "Pressure", "Temperature", "Conductivity")
+
+cabinroad_coastshallow$Date <- as.POSIXct(as.Date(cabinroad_coastshallow$newDate,origin= "1899-12-30"))
+
+standard= 42.914
+
+cabinroad_coastshallow$Salinity <- convert_RtoS(cabinroad_coastshallow$Conductivity/standard, 
+                                t= cabinroad_coastshallow$Temperature, p= 0)
+
+
+cabinroad_coastdeep<-read.csv("coastal_deep_shired2.csv", header=T)
+
+colnames(cabinroad_coastdeep) <- c("newDate", "Pressure", "Temperature", "Conductivity")
+
+
+cabinroad_coastdeep$Date <- as.POSIXct(as.Date(cabinroad_coastdeep$newDate,origin= "1899-12-30"))
+
+standard= 42.914
+
+cabinroad_coastdeep$Salinity <- convert_RtoS(cabinroad_coastdeep$Conductivity/standard, 
+                                t= cabinroad_coastdeep$Temperature, p= 0)
+
+
+cabinroad_coastshallow <- cabinroad_coastshallow%>% 
+  filter(!(Conductivity< 1)) %>% 
+  filter(!(Salinity > 40 )) %>% 
+  filter(!(Temperature > 40))
+
+
+
+cabinroad_coastdeep <- cabinroad_coastdeep %>% 
+  filter(!(Conductivity< 1)) %>% 
+  filter(!(Salinity > 40 )) %>% 
+  filter(!(Temperature > 40))
+
+```
+
+```{r include=FALSE, message=FALSE, warning=FALSE}
+ coastshallowcabin<- ggplot(data= cabinroad_coastshallow, aes(x= Date)) +
+  ggtitle("Shired- Coastal Shallow") +
+   labs(x= "\nDate (UTC)", y= "Temp(C) & Salinity (ppt)\n") +
+  geom_point(aes(y=Temperature), color= "red") +
+  geom_point(aes(y= Salinity), color= "#000000") +
+  scale_x_datetime(
+    breaks = date_breaks("2 months") ,
+    labels = date_format("%Y/%m"),
+    expand = c(0, 0),
+    limits = c(
+      as.POSIXct("2017-06-01"),
+      as.POSIXct("2019-05-01"))) +
+  theme(panel.border = element_rect(color = "black", size = 1, fill = NA, linetype="solid"),
+        axis.text=element_text(size=10),
+        axis.title.x=element_text(size=12,face="bold"),
+        axis.title.y=element_text(size=12,face="bold"),
+        plot.title =element_text(size=20, face='bold'),
+        axis.text.x = element_text( hjust = 1))
+
+coastdeepcabin<- ggplot(data= cabinroad_coastdeep, aes(x= Date)) +
+  ggtitle("Shired- Coastal Deep") +
+   labs(x= "\nDate (UTC)", y= "Temp(C) & Salinity (ppt)\n") +
+  geom_point(aes(y=Temperature), color= "red") +
+  geom_point(aes(y= Salinity), color= "#000000") +
+  scale_x_datetime(
+    breaks = date_breaks("2 months") ,
+    labels = date_format("%Y/%m"),
+    expand = c(0, 0),
+    limits = c(
+      as.POSIXct("2017-06-01"),
+      as.POSIXct("2019-05-01"))) +
+  theme(panel.border = element_rect(color = "black", size = 1, fill = NA, linetype="solid"),
+        axis.text=element_text(size=10),
+        axis.title.x=element_text(size=12,face="bold"),
+        axis.title.y=element_text(size=12,face="bold"),
+        plot.title =element_text(size=20, face='bold'),
+        axis.text.x = element_text( hjust = 1))
+
+  
+coastshallowcabin<- ggplotly( coastshallowcabin)
+coastdeepcabin<- ggplotly( coastdeepcabin)
+```
+
+```{r finalplot, echo=FALSE, fig.width=8,fig.height=6, warning= FALSE,  message=FALSE}
+  
+coastshallowcabin
+
+
+
+coastdeepcabin
+  ```

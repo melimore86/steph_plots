@@ -1,0 +1,77 @@
+---
+title: "Sandridge- Inland"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library("cowplot")
+library("devtools")
+library("ggplot2")
+library("ggpubr")
+library("grid")
+library("gridExtra")
+library("plotly")
+library("lattice")
+library("marelac")
+library("scales")
+library("dplyr")
+```
+
+
+####Longitude:  -83.39304
+####Latitude:    29.64547
+
+
+```{r, include=FALSE, warning=FALSE, message=FALSE }
+
+setwd("C:\\Users\\Mel\\Desktop\\steph_plots\\data")
+inland_sandridge<-read.csv("inland_sandridge2.csv", header=T)
+
+colnames(inland_sandridge) <- c("newDate", "Pressure", "Temperature", "Conductivity")
+
+inland_sandridge$Date <- as.POSIXct(as.Date(inland_sandridge$newDate,origin= "1899-12-30"))
+
+standard= 42.914
+
+inland_sandridge$Salinity <- convert_RtoS(inland_sandridge$Conductivity/standard, 
+                                t= inland_sandridge$Temperature, p= 0)
+
+inland_sandridge<- inland_sandridge %>% 
+  filter(!(Conductivity< 1)) %>% 
+  filter(!(Salinity > 40 )) %>% 
+  filter(!(Temperature > 40))
+
+
+```
+
+```{r include=FALSE, message=FALSE, warning=FALSE}
+insand<- ggplot(data= inland_sandridge, aes(x= Date)) +
+  #ggtitle("Sandridge- Inland") +
+  labs(x= "\nDate (UTC)", y= "Temp(C) & Salinity (ppt)\n") +
+  labs(x= "\nDate (UTC)", y= "Temp(C) & Salinity (ppt)\n") +
+  geom_point(aes(y=Temperature), color= "red") +
+  geom_point(aes(y= Salinity), color= "#000000") +
+  scale_x_datetime(
+    breaks = date_breaks("2 months") ,
+    labels = date_format("%Y/%m"),
+    expand = c(0, 0),
+    limits = c(
+      as.POSIXct("2017-06-01"),
+      as.POSIXct("2019-05-01"))) +
+  theme(panel.border = element_rect(color = "black", size = 1, fill = NA, linetype="solid"),
+        axis.text=element_text(size=10),
+        axis.title.x=element_text(size=12,face="bold"),
+        axis.title.y=element_text(size=12,face="bold"),
+        plot.title =element_text(size=20, face='bold'),
+        axis.text.x = element_text( hjust = 1))
+  
+  
+insand<- ggplotly(insand)
+```
+
+```{r finalplot, echo=FALSE, fig.width=8,fig.height=6, warning= FALSE,  message=FALSE}
+  
+    insand
+  ```

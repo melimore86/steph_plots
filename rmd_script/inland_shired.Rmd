@@ -1,0 +1,77 @@
+---
+title: "Shired- Inland"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(cowplot)
+library(devtools)
+library(ggplot2)
+library(ggpubr)
+library(grid)
+library(gridExtra)
+library(plotly)
+library(lattice)
+library(marelac)
+library(scales)
+```
+
+####Longitude:  -83.20021
+####Latitude:    29.40695
+
+
+```{r, include=FALSE, warning=FALSE, message=FALSE }
+
+setwd("C:\\Users\\Mel\\Desktop\\steph_plots\\data")
+shired_coastal<-read.csv("inland_shired2.csv", header=T)
+
+colnames(shired_coastal) <- c("newDate", "Pressure", "Temperature", "Conductivity")
+
+shired_coastal$Date <- as.POSIXct(as.Date(shired_coastal$newDate,origin= "1899-12-30"))
+
+shired_coastal$Date + 19
+
+standard= 42.914
+
+shired_coastal$Salinity <- convert_RtoS(shired_coastal$Conductivity/standard, 
+                                t= shired_coastal$Temperature, p= 0)
+
+shired_coastal<- shired_coastal %>% 
+  filter(!(Conductivity< 1)) %>% 
+  filter(!(Salinity > 40 )) %>% 
+  filter(!(Temperature > 40))
+
+
+
+```
+
+```{r include=FALSE, message=FALSE, warning=FALSE}
+ shiredin<- ggplot(data= shired_coastal, aes(x= Date)) +
+  #ggtitle("Shired- Inland") +
+    labs(x= "\nDate (UTC)", y= "Temp(C) & Salinity (ppt)\n") +
+  geom_point(aes(y=Temperature), color= "red") +
+  geom_point(aes(y= Salinity), color= "#000000") +
+  scale_x_datetime(
+    breaks = date_breaks("2 months") ,
+    labels = date_format("%Y/%m"),
+    expand = c(0, 0),
+    limits = c(
+      as.POSIXct("2017-06-01"),
+      as.POSIXct("2019-05-01"))) +
+  theme(panel.border = element_rect(color = "black", size = 1, fill = NA, linetype="solid"),
+        axis.text=element_text(size=10),
+        axis.title.x=element_text(size=12,face="bold"),
+        axis.title.y=element_text(size=12,face="bold"),
+        plot.title =element_text(size=20, face='bold'),
+        axis.text.x = element_text( hjust = 1))
+  
+  
+  shiredin<- ggplotly( shiredin)
+```
+
+```{r finalplot, echo=FALSE, fig.width=8,fig.height=6, warning= FALSE,  message=FALSE}
+  
+    shiredin
+  ```

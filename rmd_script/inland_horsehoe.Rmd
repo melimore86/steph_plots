@@ -1,0 +1,78 @@
+---
+title: "Horseshoe- Inland"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library("cowplot")
+library("devtools")
+library("ggplot2")
+library("ggpubr")
+library("grid")
+library("gridExtra")
+library("plotly")
+library("lattice")
+library("marelac")
+library("scales")
+library("dplyr")
+```
+
+####Longitude:  -83.371401
+####Latitude:    29.521375
+
+
+```{r, include=FALSE, warning=FALSE, message=FALSE }
+
+setwd("C:\\Users\\Mel\\Desktop\\steph_plots\\data")
+horse_inland<-read.csv("inland_horseshoe2.csv", header=T)
+
+colnames(horse_inland) <- c("oldDate", "Pressure", "Temperature", "Conductivity")
+
+horse_inland$Date <- as.POSIXct(as.Date(horse_inland$oldDate,origin= "1899-12-30"))
+
+standard= 42.914
+
+horse_inland$Salinity <- convert_RtoS(horse_inland$Conductivity/standard, 
+                                t= horse_inland$Temperature, p= 0)
+
+horse_inland<- horse_inland %>% 
+  filter(!(Conductivity< 1)) %>% 
+  filter(!(Salinity > 40 )) %>% 
+  filter(!(Temperature > 40))
+
+
+
+
+```
+
+```{r include=FALSE, message=FALSE, warning=FALSE}
+horsein<- ggplot(data= horse_inland, aes(x= Date)) +
+  #ggtitle("Horsehoe - Inland) +
+  labs(x= "\nDate (UTC)", y= "Temp(C) & Salinity (ppt)\n") +
+  geom_point(aes(y=Temperature), color= "red") +
+  geom_point(aes(y= Salinity), color= "#000000") +
+   scale_x_datetime(
+    breaks = date_breaks("2 months") ,
+    labels = date_format("%Y/%m"),
+    expand = c(0, 0),
+    limits = c(
+      as.POSIXct("2017-06-01"),
+      as.POSIXct("2019-05-01"))) +
+  theme(panel.border = element_rect(color = "black", size = 1, fill = NA, linetype="solid"),
+        axis.text=element_text(size=10),
+        axis.title.x=element_text(size=12,face="bold"),
+        axis.title.y=element_text(size=12,face="bold"),
+        plot.title =element_text(size=20, face='bold'),
+        axis.text.x = element_text( hjust = 1))
+  
+  
+horsein<- ggplotly(horsein)
+```
+
+```{r finalplot, echo=FALSE, fig.width=8,fig.height=6, warning= FALSE,  message=FALSE}
+  
+   horsein
+  ```
